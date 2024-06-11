@@ -1,10 +1,37 @@
-import React from 'react';
-import { Box, Image, Input, Button, Text } from '@chakra-ui/react';
-import { FiPlusCircle } from 'react-icons/fi';
-import { TaskCard } from '@/components/TaskCard';
-import PomodoroTimer from '@/components/PomodoroTimer/Index';
+"use client";
+
+import { Box, Image, Text } from "@chakra-ui/react";
+
+import PomodoroTimer from "@/components/PomodoroTimer/Index";
+import { TaskCard } from "@/components/TaskCard";
+import TaskForm from "@/components/TaskForm";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth0 } from "@auth0/auth0-react";
 
 export default function Home() {
+  const { getAccessTokenSilently } = useAuth0();
+  const { isLoading, data: tasks } = useQuery({
+    queryKey: ["tasks"],
+    queryFn: async () => {
+      const token = await getAccessTokenSilently();
+      const response = await fetch("http://localhost:8000/todo", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return await response.json();
+    },
+  });
+
+  if (isLoading) {
+    return <></>;
+  }
+
+  const totalTasks = tasks.length;
+  const completedTasks: number = tasks
+    .map((task: Task): number => (task.completed ? 1 : 0))
+    .reduce((prev: number, curr: number): number => prev + curr, 0);
+
   return (
     <Box bg="#1a1a1a">
       <Box
@@ -16,11 +43,14 @@ export default function Home() {
         padding="4.5rem 0"
       >
         <Image src="/target.svg" alt="logo" w={60} />
-        <Text as='b' fontSize={40}>
+        <Text as="b" fontSize={40}>
           to
-          <Text as="span" color="#f34b58">do</Text>
+          <Text as="span" color="#f34b58">
+            do
+          </Text>
         </Text>
       </Box>
+
       <Box
         maxWidth="70rem"
         margin="2rem auto"
@@ -30,70 +60,47 @@ export default function Home() {
         gap="2rem"
         alignItems="flex-start"
       >
-        <Box
-          padding="0 2rem"
-          display="flex"
-          flexDirection="column"
-          gap="4rem"
-        >
-          <Box
-            display="flex"
-            justifyContent="center"
-            width="100%"
-            marginTop="-4rem"
-            gap="0.625rem"
-          >
-            <Input
-              placeholder="Adicione uma nova tarefa"
-              background="#262626"
-              color="#808080"
-              padding="2rem"
-              width="100%"
-              height="3.375rem"
-              fontSize="1rem"
-              resize="none"
-              border="none"
-              borderRadius="8px"></Input>
-            <Button
-              background="#1e6f9f"
-              border="none"
-              padding="2rem 1rem"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              fontSize="0.875rem"
-              color="#fff"
-              fontWeight="700"
-              gap="0.5rem"
-              cursor="pointer"
-              height="3.375rem"
-              borderRadius="8px"
-              transition="color 0.1s, background-color 0.1s"
-              _hover={{ background: "#105176" }}
-            >
-              Criar
-              <FiPlusCircle size={20} />
-            </Button>
-          </Box>
-        </Box>
+        <TaskForm />
+
         <Box display="flex" justifyContent="space-between" mt="2rem">
           <Box>
-            <Box display="flex" justifyContent="space-between" p="0 2rem" mb="1rem">
-              <Text color="#4ea8de">Tarefas criadas <Text as="span" color="white">0</Text></Text>
-              <Text color="#43b678">Concluídas <Text as="span" color="white">2 de 5</Text></Text>
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              p="0 2rem"
+              mb="1rem"
+            >
+              <Text color="#4ea8de" mr="6rem">
+                Tarefas criadas{" "}
+                <Text as="span" color="white">
+                  {totalTasks}
+                </Text>
+              </Text>
+              <Text color="#43b678">
+                Concluídas{" "}
+                <Text as="span" color="white">
+                  {completedTasks} de {totalTasks}
+                </Text>
+              </Text>
             </Box>
-            <Box display="flex"
+            <Box
+              display="flex"
               justifyContent="center"
               flexDirection="column"
               alignItems="center"
               color="#808080"
             >
-              {/* <Image src="/todo.svg" alt="lista icone" w="3rem" h="3rem"/>
-          <br/>
-          <Text>Você ainda não tem tarefas cadastradas</Text>
-          <br />
-          <Text>Crie tarefas e organize seus itens a fazer</Text> */}
-              <TaskCard />
+              {tasks.length ? (
+                tasks.map((todo: Task) => <TaskCard key={todo.id} {...todo} />)
+              ) : (
+                <>
+                  <Image src="/todo.svg" alt="lista ícone" w="3rem" h="3rem" />
+                  <br />
+                  <Text>Você ainda não tem tarefas cadastradas</Text>
+                  <br />
+                  <Text>Crie tarefas e organize seus itens a fazer</Text>
+                </>
+              )}
             </Box>
           </Box>
           <PomodoroTimer />

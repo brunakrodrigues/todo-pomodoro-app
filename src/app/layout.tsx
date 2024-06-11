@@ -1,12 +1,14 @@
+import "./globals.css";
+
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css";
+import Auth0App from "./auth0app";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "to do",
-  description: "to do list + pomodoro",
+  title: "ToDo",
+  description: "ToDo list and pomodoro app",
 };
 
 export default function RootLayout({
@@ -16,7 +18,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <Auth0App>{children}</Auth0App>
+      </body>
     </html>
   );
 }
